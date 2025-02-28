@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>AR Animation Demo</title>
+    <!-- Include A-Frame -->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <!-- Include AR.js for A-Frame -->
+    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.6/aframe/build/aframe-ar.js"></script>
+    <style>
+      body, html { margin: 0; overflow: hidden; }
+    </style>
+  </head>
+  <body>
+    <!-- AR.js scene -->
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+      <!-- Use the built-in "hiro" marker -->
+      <a-marker preset="hiro">
+        <a-plane id="animationPlane"
+                 position="0 0 0"
+                 rotation="-90 0 0"
+                 width="1" height="1"
+                 material="src: #frame1; transparent: true;">
+        </a-plane>
+      </a-marker>
+      <a-entity camera></a-entity>
+      
+      <a-assets>
+        <img id="frame1" src="frames/timestep_10.jpg">
+      </a-assets>
+    </a-scene>
+    
+    <script>
+      // Example animation logic (optional)
+      const totalFrames = 300; 
+      let currentFrame = 1;
+      const frameInterval = 1000;
+      
+      function updateFrame() {
+        currentFrame++;
+        if (currentFrame > totalFrames) {
+          currentFrame = 1;
+        }
+        const timeStep = currentFrame * 10;
+        const imageUrl = 'frames/timestep_' + timeStep + '.jpg';
+        const plane = document.getElementById('animationPlane');
+        plane.setAttribute('material', 'src', imageUrl);
+      }
+      
+      const marker = document.querySelector('a-marker');
+      marker.addEventListener('markerFound', () => {
+        window.animationInterval = setInterval(updateFrame, frameInterval);
+      });
+      marker.addEventListener('markerLost', () => {
+        clearInterval(window.animationInterval);
+      });
+    </script>
+  </body>
+</html>
