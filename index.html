@@ -13,7 +13,7 @@
   </head>
   <body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-      <!-- Use the built-in Hiro marker -->
+      <!-- Using the default "hiro" marker -->
       <a-marker preset="hiro">
         <a-plane id="animationPlane"
                  position="0 0 0"
@@ -25,27 +25,36 @@
       <a-entity camera></a-entity>
       
       <a-assets>
-        <img id="frame1" src="frames/timestep_10.png">
+        <img id="frame1" src="frames/timestep_10.jpg">
       </a-assets>
     </a-scene>
     
     <script>
-      // Updated animation configuration:
-      const totalFrames = 96; // From timestep_10.jpg to timestep_960.jpg
+      // Updated animation configuration for frames from timestep_10 to timestep_960
+      const totalFrames = 96; // 960/10 = 96 frames
       let currentFrame = 1;
-      const frameInterval = 1000; // Change frame every 1000ms (adjust as needed)
+      const frameInterval = 1000; // 1 second per frame (adjust as needed)
       
-      // Function to update the displayed image on the plane
       function updateFrame() {
         currentFrame++;
         if (currentFrame > totalFrames) {
-          currentFrame = 1; // Loop back to the start
+          currentFrame = 1; // loop back to the start
         }
-        // Calculate the current time step: frame 1 = 10, frame 2 = 20, etc.
+        // Calculate the current time step (frame 1 = 10, frame 2 = 20, etc.)
         const timeStep = currentFrame * 10;
         const imageUrl = 'frames/timestep_' + timeStep + '.jpg';
         const plane = document.getElementById('animationPlane');
-        plane.setAttribute('material', 'src', imageUrl);
+  
+        // Preload the image before updating the texture
+        const tempImg = new Image();
+        tempImg.onload = function() {
+          // Once the image is loaded, update the plane's material source
+          plane.setAttribute('material', 'src', imageUrl);
+        };
+        tempImg.onerror = function() {
+          console.error("Error loading image:", imageUrl);
+        };
+        tempImg.src = imageUrl;
       }
       
       // Start the animation when the marker is detected
