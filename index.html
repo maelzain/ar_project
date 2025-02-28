@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8">
     <title>AR Animation Demo</title>
-    <!-- A-Frame -->
+    <!-- Include A-Frame -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <!-- AR.js -->
+    <!-- Include AR.js for A-Frame -->
     <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.6/aframe/build/aframe-ar.js"></script>
     <style>
       body, html { margin: 0; overflow: hidden; }
@@ -13,8 +13,12 @@
   </head>
   <body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+      <!-- Use the built-in Hiro marker -->
       <a-marker preset="hiro">
-        <a-plane position="0 0 0" rotation="-90 0 0" width="1" height="1"
+        <a-plane id="animationPlane"
+                 position="0 0 0"
+                 rotation="-90 0 0"
+                 width="1" height="1"
                  material="src: #frame1; transparent: true;">
         </a-plane>
       </a-marker>
@@ -26,7 +30,34 @@
     </a-scene>
     
     <script>
-      // Optional: AR animation logic
+      // Updated animation configuration:
+      const totalFrames = 96; // From timestep_10.jpg to timestep_960.jpg
+      let currentFrame = 1;
+      const frameInterval = 1000; // Change frame every 1000ms (adjust as needed)
+      
+      // Function to update the displayed image on the plane
+      function updateFrame() {
+        currentFrame++;
+        if (currentFrame > totalFrames) {
+          currentFrame = 1; // Loop back to the start
+        }
+        // Calculate the current time step: frame 1 = 10, frame 2 = 20, etc.
+        const timeStep = currentFrame * 10;
+        const imageUrl = 'frames/timestep_' + timeStep + '.jpg';
+        const plane = document.getElementById('animationPlane');
+        plane.setAttribute('material', 'src', imageUrl);
+      }
+      
+      // Start the animation when the marker is detected
+      const marker = document.querySelector('a-marker');
+      marker.addEventListener('markerFound', () => {
+        window.animationInterval = setInterval(updateFrame, frameInterval);
+      });
+      
+      // Stop the animation when the marker is lost
+      marker.addEventListener('markerLost', () => {
+        clearInterval(window.animationInterval);
+      });
     </script>
   </body>
 </html>
