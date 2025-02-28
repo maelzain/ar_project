@@ -31,28 +31,24 @@
     </a-scene>
     
     <script>
-      // Define an array of your frame file names in the desired order.
-      // Replace these names with your actual file names.
+      // Define your frame file names in order
       const frameFiles = [
         'frames/timestep_10.png',
         'frames/timestep_20.png',
-        // Add more frame filenames in the exact order you want:
-        // 'frames/someOtherFrame.png',
-        // 'frames/anotherFrame.png',
-        // ... up to your last frame.
+        // Add the rest of your filenames here...
       ];
       
       let currentFrameIndex = 0;
       const totalFrames = frameFiles.length;
-      const frameInterval = 1000; // Change frame every 1000ms (adjust as needed)
+      const frameInterval = 100; // 100ms per frame (10 frames per second)
       
       function updateFrame() {
-        // Increment the frame index and wrap around when reaching the end.
+        // Move to the next frame and loop back if necessary
         currentFrameIndex = (currentFrameIndex + 1) % totalFrames;
         const imageUrl = frameFiles[currentFrameIndex];
         const plane = document.getElementById('animationPlane');
         
-        // Preload the new image before applying it.
+        // Preload the new image before applying it
         const tempImg = new Image();
         tempImg.onload = function() {
           plane.setAttribute('material', 'src', imageUrl);
@@ -63,13 +59,13 @@
         tempImg.src = imageUrl;
       }
       
-      // Start the animation when the marker is detected.
+      // Start the animation when the marker is detected
       const marker = document.querySelector('a-marker');
       marker.addEventListener('markerFound', () => {
         window.animationInterval = setInterval(updateFrame, frameInterval);
       });
       
-      // Stop the animation when the marker is lost.
+      // Stop the animation when the marker is lost
       marker.addEventListener('markerLost', () => {
         clearInterval(window.animationInterval);
       });
