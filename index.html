@@ -25,7 +25,7 @@
       <a-entity camera></a-entity>
       
       <a-assets>
-        <img id="frame1" src="frames/timestep_10.jpg">
+        <img id="frame1" src="frames/timestep_10.png">
       </a-assets>
     </a-scene>
     
@@ -42,7 +42,7 @@
         }
         // Calculate the current time step (frame 1 = 10, frame 2 = 20, etc.)
         const timeStep = currentFrame * 10;
-        const imageUrl = 'frames/timestep_' + timeStep + '.jpg';
+        const imageUrl = 'frames/timestep_' + timeStep + '.png';
         const plane = document.getElementById('animationPlane');
   
         // Preload the image before updating the texture
