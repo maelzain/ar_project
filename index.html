@@ -13,7 +13,7 @@
   </head>
   <body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-      <!-- Using the default "hiro" marker -->
+      <!-- Use the default "hiro" marker -->
       <a-marker preset="hiro">
         <a-plane id="animationPlane"
                  position="0 0 0"
@@ -31,24 +31,23 @@
     </a-scene>
     
     <script>
-      // Define your frame file names in order
-      const frameFiles = [
-        'frames/timestep_10.png',
-        'frames/timestep_20.png',
-        // Add the rest of your filenames here...
-      ];
+      // Dynamically generate an array of frame file names from timestep_10.png to timestep_960.png
+      const frameFiles = [];
+      for (let t = 10; t <= 960; t += 10) {
+        frameFiles.push(`frames/timestep_${t}.png`);
+      }
       
       let currentFrameIndex = 0;
       const totalFrames = frameFiles.length;
-      const frameInterval = 50; // 100ms per frame (10 frames per second)
+      const frameInterval = 100; // 100ms per frame (adjust for desired speed)
       
       function updateFrame() {
-        // Move to the next frame and loop back if necessary
+        // Loop through the frames in order
         currentFrameIndex = (currentFrameIndex + 1) % totalFrames;
         const imageUrl = frameFiles[currentFrameIndex];
         const plane = document.getElementById('animationPlane');
         
-        // Preload the new image before applying it
+        // Preload the new image before updating the plane's material
         const tempImg = new Image();
         tempImg.onload = function() {
           plane.setAttribute('material', 'src', imageUrl);
