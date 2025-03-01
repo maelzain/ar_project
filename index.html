@@ -13,25 +13,17 @@
   </head>
   <body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-      <!-- Using the default "hiro" marker -->
-      <a-marker preset="hiro">
-        <!-- Group container for the plane and text -->
+      <!-- Use the default "hiro" marker -->
+      <a-marker preset="hiro" id="marker">
+        <!-- Group entity for AR content -->
         <a-entity id="content">
-          <!-- The AR animation plane -->
+          <!-- AR animation plane -->
           <a-plane id="animationPlane"
                    position="0 0 0"
                    rotation="-90 0 0"
                    width="1" height="1"
                    material="src: #frame1; transparent: true;">
           </a-plane>
-          <!-- Overlay text placed at the top left of the plane -->
-          <a-text value="Representative Sample of the Dataset"
-                  position="-0.45 0.45 0.01"
-                  rotation="-90 0 0"
-                  align="left"
-                  color="#ffffff"
-                  width="1">
-          </a-text>
         </a-entity>
       </a-marker>
       <a-entity camera></a-entity>
@@ -43,7 +35,7 @@
     </a-scene>
     
     <script>
-      // Dynamically generate an array of frame file names from timestep_10.png to timestep_960.png
+      // Dynamically generate an ordered array of frame file names from timestep_10.png to timestep_960.png
       const frameFiles = [];
       for (let t = 10; t <= 960; t += 10) {
         frameFiles.push(`frames/timestep_${t}.png`);
@@ -51,14 +43,14 @@
       
       let currentFrameIndex = 0;
       const totalFrames = frameFiles.length;
-      const frameInterval = 100; // Adjust for desired frame rate
+      const frameInterval = 100; // 100ms per frame (adjust for desired speed)
       
       function updateFrame() {
         currentFrameIndex = (currentFrameIndex + 1) % totalFrames;
         const imageUrl = frameFiles[currentFrameIndex];
         const plane = document.getElementById('animationPlane');
         
-        // Preload the image before updating the material
+        // Preload the new image before updating the plane's material
         const tempImg = new Image();
         tempImg.onload = function() {
           plane.setAttribute('material', 'src', imageUrl);
@@ -70,7 +62,7 @@
       }
       
       // Start the animation when the marker is detected
-      const marker = document.querySelector('a-marker');
+      const marker = document.getElementById('marker');
       marker.addEventListener('markerFound', () => {
         window.animationInterval = setInterval(updateFrame, frameInterval);
       });
@@ -79,6 +71,22 @@
       marker.addEventListener('markerLost', () => {
         clearInterval(window.animationInterval);
       });
+      
+      // Create and animate the overlay text via JavaScript
+      const textEl = document.createElement('a-text');
+      textEl.setAttribute('value', 'Representative Sample of the Dataset');
+      // Position the text at the top left of the AR content
+      textEl.setAttribute('position', '-0.45 0.45 0.01');
+      textEl.setAttribute('rotation', '-90 0 0');
+      textEl.setAttribute('align', 'left');
+      textEl.setAttribute('color', '#ffffff');
+      textEl.setAttribute('width', '1');
+      // Animate the text's opacity to create a fade in/out effect
+      textEl.setAttribute('animation', 'property: material.opacity; from: 0; to: 1; dur: 2000; dir: alternate; loop: true');
+      
+      // Append the text to the same group as the animation plane so that it moves with the marker
+      const contentEntity = document.getElementById('content');
+      contentEntity.appendChild(textEl);
     </script>
   </body>
 </html>
