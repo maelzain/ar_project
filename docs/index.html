@@ -13,27 +13,17 @@
   </head>
   <body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-      <!-- Using the default Hiro marker -->
+      <!-- Using the default "hiro" marker -->
       <a-marker preset="hiro" id="marker">
         <!-- Group entity for AR content -->
         <a-entity id="content">
-          <!-- AR animation plane -->
+          <!-- Animation plane -->
           <a-plane id="animationPlane"
                    position="0 0 0"
                    rotation="-90 0 0"
                    width="1" height="1"
-                   material="src: #frame1; transparent: true">
+                   material="src: #frame1; transparent: true;">
           </a-plane>
-          <!-- Overlay text at the top left -->
-          <a-text id="overlayText"
-                  value="Representative Sample of the Dataset"
-                  position="-0.45 0.45 0.01"
-                  rotation="-90 0 0"
-                  align="left"
-                  color="#ffffff"
-                  width="1"
-                  animation="property: material.opacity; from: 0; to: 1; dur: 2000; dir: alternate; loop: true">
-          </a-text>
         </a-entity>
       </a-marker>
       <a-entity camera></a-entity>
@@ -45,40 +35,68 @@
     </a-scene>
     
     <script>
-      // Build an ordered array of frame filenames (from timestep_10.png to timestep_960.png)
+      // Generate frame filenames: timestep_10.png to timestep_960.png, step 10.
       const frameFiles = [];
       for (let t = 10; t <= 960; t += 10) {
         frameFiles.push(`frames/timestep_${t}.png`);
       }
-      console.log("Frame Files Array:", frameFiles);
       
       let currentFrameIndex = 0;
       const totalFrames = frameFiles.length;
-      const frameInterval = 50; // 50ms per frame (approximately 20 frames per second)
+      // Adjust this interval for your desired speed (100ms per frame)
+      const frameInterval = 100; 
+      let animationInterval = null;
       
       function updateFrame() {
         currentFrameIndex = (currentFrameIndex + 1) % totalFrames;
         const imageUrl = frameFiles[currentFrameIndex];
-        console.log("Switching to frame:", imageUrl);
-        const plane = document.getElementById("animationPlane");
-        // Update the image without additional preloading delay
-        plane.setAttribute("material", "src", imageUrl);
+        const plane = document.getElementById('animationPlane');
+        
+        // Preload new image
+        const tempImg = new Image();
+        tempImg.onload = function() {
+          // Log for debugging
+          console.log("Loaded frame:", imageUrl);
+          // Update material source
+          plane.setAttribute('material', 'src', imageUrl);
+        };
+        tempImg.onerror = function() {
+          console.error("Error loading image:", imageUrl);
+        };
+        tempImg.src = imageUrl;
       }
       
-      // For debugging, start the animation immediately (remove marker dependency)
-      window.animationInterval = setInterval(updateFrame, frameInterval);
+      // Start the animation when the marker is detected
+      const marker = document.getElementById('marker');
+      marker.addEventListener('markerFound', () => {
+        console.log("Marker found: starting animation.");
+        if (!animationInterval) {
+          animationInterval = setInterval(updateFrame, frameInterval);
+        }
+      });
       
-      // If you want to run the animation only when the marker is detected,
-      // comment out the line above and uncomment the following:
-      /*
-      const marker = document.getElementById("marker");
-      marker.addEventListener("markerFound", () => {
-        window.animationInterval = setInterval(updateFrame, frameInterval);
+      // Stop the animation when the marker is lost
+      marker.addEventListener('markerLost', () => {
+        console.log("Marker lost: stopping animation.");
+        if (animationInterval) {
+          clearInterval(animationInterval);
+          animationInterval = null;
+        }
       });
-      marker.addEventListener("markerLost", () => {
-        clearInterval(window.animationInterval);
-      });
-      */
+      
+      // Create overlay text (Representative Sample of the Dataset)
+      const textEl = document.createElement('a-text');
+      textEl.setAttribute('value', 'Representative Sample of the Dataset');
+      textEl.setAttribute('position', '-0.45 0.45 0.01');
+      textEl.setAttribute('rotation', '-90 0 0');
+      textEl.setAttribute('align', 'left');
+      textEl.setAttribute('color', '#ffffff');
+      textEl.setAttribute('width', '1');
+      // Animate opacity for a fade in/out effect
+      textEl.setAttribute('animation', 'property: material.opacity; from: 0; to: 1; dur: 2000; dir: alternate; loop: true');
+      
+      const contentEntity = document.getElementById('content');
+      contentEntity.appendChild(textEl);
     </script>
   </body>
 </html>
