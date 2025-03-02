@@ -13,90 +13,90 @@
   </head>
   <body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-      <!-- Using the default "hiro" marker -->
+      <!-- Use the default "hiro" marker -->
       <a-marker preset="hiro" id="marker">
-        <!-- Group entity for AR content -->
         <a-entity id="content">
-          <!-- Animation plane -->
+          <!-- AR animation plane -->
           <a-plane id="animationPlane"
                    position="0 0 0"
                    rotation="-90 0 0"
                    width="1" height="1"
-                   material="src: #frame1; transparent: true;">
+                   material="src: #frame0; transparent: true;">
           </a-plane>
         </a-entity>
       </a-marker>
       <a-entity camera></a-entity>
       
-      <a-assets>
-        <!-- Preload the first frame -->
-        <img id="frame1" src="frames/timestep_10.png">
+      <a-assets id="assets">
+        <!-- Preload the first frame (it will be replaced dynamically) -->
+        <img id="frame0" src="frames/timestep_10.png">
       </a-assets>
     </a-scene>
     
     <script>
-      // Generate frame filenames: timestep_10.png to timestep_960.png in steps of 10.
-      const frameFiles = [];
-      for (let t = 10; t <= 960; t += 10) {
-        frameFiles.push(`frames/timestep_${t}.png`);
+      // Helper: natural sort function (extracts numbers for proper ordering)
+      function naturalSort(a, b) {
+        const regex = /\d+/g;
+        const aNums = a.match(regex);
+        const bNums = b.match(regex);
+        if (aNums && bNums) {
+          return parseInt(aNums[0]) - parseInt(bNums[0]);
+        }
+        return a.localeCompare(b);
       }
       
-      console.log("Total frames generated:", frameFiles.length); // Should log 96
-      
-      let currentFrameIndex = 0;
-      const totalFrames = frameFiles.length;
-      // Set the interval (in ms) per frame (adjust this value to speed up or slow down)
-      const frameInterval = 100; 
-      let animationInterval = null;
-      
-      function updateFrame() {
-        currentFrameIndex = (currentFrameIndex + 1) % totalFrames;
-        const imageUrl = frameFiles[currentFrameIndex];
-        const plane = document.getElementById('animationPlane');
-        
-        // Preload the new image
-        const tempImg = new Image();
-        tempImg.onload = function() {
-          console.log("Loaded frame:", imageUrl, "Index:", currentFrameIndex);
-          plane.setAttribute('material', 'src', imageUrl);
-        };
-        tempImg.onerror = function() {
-          console.error("Error loading image:", imageUrl);
-        };
-        tempImg.src = imageUrl;
-      }
-      
-      // Start the animation when the marker is detected
-      const marker = document.getElementById('marker');
-      marker.addEventListener('markerFound', () => {
-        console.log("Marker found: starting animation.");
-        if (!animationInterval) {
-          animationInterval = setInterval(updateFrame, frameInterval);
-        }
-      });
-      
-      // Stop the animation when the marker is lost
-      marker.addEventListener('markerLost', () => {
-        console.log("Marker lost: stopping animation.");
-        if (animationInterval) {
-          clearInterval(animationInterval);
-          animationInterval = null;
-        }
-      });
-      
-      // Create overlay text: "Representative Sample of the Dataset"
-      const textEl = document.createElement('a-text');
-      textEl.setAttribute('value', 'Representative Sample of the Dataset');
-      textEl.setAttribute('position', '-0.45 0.45 0.01');
-      textEl.setAttribute('rotation', '-90 0 0');
-      textEl.setAttribute('align', 'left');
-      textEl.setAttribute('color', '#ffffff');
-      textEl.setAttribute('width', '1');
-      // Animate opacity for a fade in/out effect
-      textEl.setAttribute('animation', 'property: material.opacity; from: 0; to: 1; dur: 2000; dir: alternate; loop: true');
-      
-      const contentEntity = document.getElementById('content');
-      contentEntity.appendChild(textEl);
+      // Load the manifest file that lists all frame file names
+      fetch('frames/manifest.json')
+        .then(response => response.json())
+        .then(fileList => {
+          // Sort the fileList naturally
+          fileList.sort(naturalSort);
+          
+          let currentFrameIndex = 0;
+          const totalFrames = fileList.length;
+          const frameInterval = 100; // Adjust speed here (ms per frame)
+          
+          function updateFrame() {
+            currentFrameIndex = (currentFrameIndex + 1) % totalFrames;
+            const imageUrl = 'frames/' + fileList[currentFrameIndex];
+            const plane = document.getElementById('animationPlane');
+            
+            // Preload the image before updating
+            const tempImg = new Image();
+            tempImg.onload = function() {
+              plane.setAttribute('material', 'src', imageUrl);
+            };
+            tempImg.onerror = function() {
+              console.error("Error loading image:", imageUrl);
+            };
+            tempImg.src = imageUrl;
+          }
+          
+          // Start the animation when the marker is detected
+          const marker = document.getElementById('marker');
+          marker.addEventListener('markerFound', () => {
+            window.animationInterval = setInterval(updateFrame, frameInterval);
+          });
+          
+          // Stop the animation when the marker is lost
+          marker.addEventListener('markerLost', () => {
+            clearInterval(window.animationInterval);
+          });
+          
+          // Optionally, you can also add the overlay text here (if needed)
+          const textEl = document.createElement('a-text');
+          textEl.setAttribute('value', 'Representative Sample of the Dataset');
+          textEl.setAttribute('position', '-0.45 0.45 0.01');
+          textEl.setAttribute('rotation', '-90 0 0');
+          textEl.setAttribute('align', 'left');
+          textEl.setAttribute('color', '#ffffff');
+          textEl.setAttribute('width', '1');
+          textEl.setAttribute('animation', 'property: material.opacity; from: 0; to: 1; dur: 2000; dir: alternate; loop: true');
+          document.getElementById('content').appendChild(textEl);
+        })
+        .catch(error => {
+          console.error("Error fetching manifest:", error);
+        });
     </script>
   </body>
 </html>
