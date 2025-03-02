@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>AR Animation Demo</title>
+    <title>AR Animation Debug</title>
     <!-- Include A-Frame -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <!-- Include AR.js for A-Frame -->
@@ -14,8 +14,7 @@
   <body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true;">
       <!-- Using the default Hiro marker -->
-      <a-marker preset="hiro" id="marker">
-        <!-- Grouping the AR content together -->
+      <a-marker preset="hiro">
         <a-entity id="content">
           <!-- The animated plane -->
           <a-plane id="animationPlane"
@@ -25,8 +24,7 @@
                    material="src: #frame1; transparent: true;">
           </a-plane>
           <!-- Overlay text at the top left -->
-          <a-text id="overlayText"
-                  value="Representative Sample of the Dataset"
+          <a-text value="Representative Sample of the Dataset"
                   position="-0.45 0.45 0.01"
                   rotation="-90 0 0"
                   align="left"
@@ -44,7 +42,7 @@
     </a-scene>
     
     <script>
-      // Generate ordered array of frame filenames (timestep_10.png to timestep_960.png)
+      // Generate an ordered array of frame filenames from timestep_10.png to timestep_960.png
       const frameFiles = [];
       for (let t = 10; t <= 960; t += 10) {
         frameFiles.push(`frames/timestep_${t}.png`);
@@ -53,24 +51,22 @@
       
       let currentFrameIndex = 0;
       const totalFrames = frameFiles.length;
-      const frameInterval = 50; // 50ms per frame
+      const frameInterval = 50; // 50ms per frame for ~20fps
       
       function updateFrame() {
         currentFrameIndex = (currentFrameIndex + 1) % totalFrames;
         const imageUrl = frameFiles[currentFrameIndex];
         console.log("Switching to frame:", imageUrl);
         const plane = document.getElementById("animationPlane");
-        
-        const tempImg = new Image();
-        tempImg.onload = function() {
-          plane.setAttribute("material", "src", imageUrl);
-        };
-        tempImg.onerror = function() {
-          console.error("Error loading image:", imageUrl);
-        };
-        tempImg.src = imageUrl;
+        // Directly update the material's src attribute
+        plane.setAttribute("material", "src", imageUrl);
       }
       
+      // Start the animation immediately (for testing)
+      window.animationInterval = setInterval(updateFrame, frameInterval);
+      
+      // Uncomment the following code if you want to use marker detection after debugging:
+      /*
       const marker = document.getElementById("marker");
       marker.addEventListener("markerFound", () => {
         console.log("Marker found, starting animation.");
@@ -80,9 +76,7 @@
         console.log("Marker lost, stopping animation.");
         clearInterval(window.animationInterval);
       });
-      
-      // Uncomment for testing without marker detection:
-      // window.animationInterval = setInterval(updateFrame, frameInterval);
+      */
     </script>
   </body>
 </html>
