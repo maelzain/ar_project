@@ -12,19 +12,19 @@
     </style>
   </head>
   <body>
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true;">
       <!-- Using the default Hiro marker -->
       <a-marker preset="hiro" id="marker">
         <!-- Grouping the AR content together -->
         <a-entity id="content">
-          <!-- Animated plane showing the frames -->
+          <!-- The animated plane -->
           <a-plane id="animationPlane"
                    position="0 0 0"
                    rotation="-90 0 0"
                    width="1" height="1"
                    material="src: #frame1; transparent: true;">
           </a-plane>
-          <!-- Overlay text in the top left corner -->
+          <!-- Overlay text at the top left -->
           <a-text id="overlayText"
                   value="Representative Sample of the Dataset"
                   position="-0.45 0.45 0.01"
@@ -44,7 +44,7 @@
     </a-scene>
     
     <script>
-      // Generate an ordered array of frame filenames (from timestep_10.png to timestep_960.png)
+      // Generate ordered array of frame filenames (timestep_10.png to timestep_960.png)
       const frameFiles = [];
       for (let t = 10; t <= 960; t += 10) {
         frameFiles.push(`frames/timestep_${t}.png`);
@@ -53,16 +53,14 @@
       
       let currentFrameIndex = 0;
       const totalFrames = frameFiles.length;
-      const frameInterval = 50; // 50ms per frame ~20 fps; adjust as needed
+      const frameInterval = 50; // 50ms per frame
       
       function updateFrame() {
-        // Cycle through the frames
         currentFrameIndex = (currentFrameIndex + 1) % totalFrames;
         const imageUrl = frameFiles[currentFrameIndex];
         console.log("Switching to frame:", imageUrl);
-        
         const plane = document.getElementById("animationPlane");
-        // Preload the image before updating the plane's material
+        
         const tempImg = new Image();
         tempImg.onload = function() {
           plane.setAttribute("material", "src", imageUrl);
@@ -73,7 +71,6 @@
         tempImg.src = imageUrl;
       }
       
-      // Start the animation when the marker is detected and stop when lost
       const marker = document.getElementById("marker");
       marker.addEventListener("markerFound", () => {
         console.log("Marker found, starting animation.");
@@ -83,6 +80,9 @@
         console.log("Marker lost, stopping animation.");
         clearInterval(window.animationInterval);
       });
+      
+      // Uncomment for testing without marker detection:
+      // window.animationInterval = setInterval(updateFrame, frameInterval);
     </script>
   </body>
 </html>
