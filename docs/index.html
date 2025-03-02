@@ -35,15 +35,17 @@
     </a-scene>
     
     <script>
-      // Generate frame filenames: timestep_10.png to timestep_960.png, step 10.
+      // Generate frame filenames: timestep_10.png to timestep_960.png in steps of 10.
       const frameFiles = [];
       for (let t = 10; t <= 960; t += 10) {
         frameFiles.push(`frames/timestep_${t}.png`);
       }
       
+      console.log("Total frames generated:", frameFiles.length); // Should log 96
+      
       let currentFrameIndex = 0;
       const totalFrames = frameFiles.length;
-      // Adjust this interval for your desired speed (100ms per frame)
+      // Set the interval (in ms) per frame (adjust this value to speed up or slow down)
       const frameInterval = 100; 
       let animationInterval = null;
       
@@ -52,12 +54,10 @@
         const imageUrl = frameFiles[currentFrameIndex];
         const plane = document.getElementById('animationPlane');
         
-        // Preload new image
+        // Preload the new image
         const tempImg = new Image();
         tempImg.onload = function() {
-          // Log for debugging
-          console.log("Loaded frame:", imageUrl);
-          // Update material source
+          console.log("Loaded frame:", imageUrl, "Index:", currentFrameIndex);
           plane.setAttribute('material', 'src', imageUrl);
         };
         tempImg.onerror = function() {
@@ -84,7 +84,7 @@
         }
       });
       
-      // Create overlay text (Representative Sample of the Dataset)
+      // Create overlay text: "Representative Sample of the Dataset"
       const textEl = document.createElement('a-text');
       textEl.setAttribute('value', 'Representative Sample of the Dataset');
       textEl.setAttribute('position', '-0.45 0.45 0.01');
