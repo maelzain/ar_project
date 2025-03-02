@@ -13,7 +13,7 @@
   </head>
   <body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-      <!-- Use the default "hiro" marker -->
+      <!-- Using the default Hiro marker -->
       <a-marker preset="hiro" id="marker">
         <!-- Group entity for AR content -->
         <a-entity id="content">
@@ -22,8 +22,18 @@
                    position="0 0 0"
                    rotation="-90 0 0"
                    width="1" height="1"
-                   material="src: #frame1; transparent: true;">
+                   material="src: #frame1; transparent: true">
           </a-plane>
+          <!-- Overlay text at the top left -->
+          <a-text id="overlayText"
+                  value="Representative Sample of the Dataset"
+                  position="-0.45 0.45 0.01"
+                  rotation="-90 0 0"
+                  align="left"
+                  color="#ffffff"
+                  width="1"
+                  animation="property: material.opacity; from: 0; to: 1; dur: 2000; dir: alternate; loop: true">
+          </a-text>
         </a-entity>
       </a-marker>
       <a-entity camera></a-entity>
@@ -35,58 +45,40 @@
     </a-scene>
     
     <script>
-      // Dynamically generate an ordered array of frame file names from timestep_10.png to timestep_960.png
+      // Build an ordered array of frame filenames (from timestep_10.png to timestep_960.png)
       const frameFiles = [];
       for (let t = 10; t <= 960; t += 10) {
-        frameFiles.push(frames/timestep_${t}.png);
+        frameFiles.push(`frames/timestep_${t}.png`);
       }
+      console.log("Frame Files Array:", frameFiles);
       
       let currentFrameIndex = 0;
       const totalFrames = frameFiles.length;
-      const frameInterval = 100; // 100ms per frame (adjust for desired speed)
+      const frameInterval = 50; // 50ms per frame (approximately 20 frames per second)
       
       function updateFrame() {
         currentFrameIndex = (currentFrameIndex + 1) % totalFrames;
         const imageUrl = frameFiles[currentFrameIndex];
-        const plane = document.getElementById('animationPlane');
-        
-        // Preload the new image before updating the plane's material
-        const tempImg = new Image();
-        tempImg.onload = function() {
-          plane.setAttribute('material', 'src', imageUrl);
-        };
-        tempImg.onerror = function() {
-          console.error("Error loading image:", imageUrl);
-        };
-        tempImg.src = imageUrl;
+        console.log("Switching to frame:", imageUrl);
+        const plane = document.getElementById("animationPlane");
+        // Update the image without additional preloading delay
+        plane.setAttribute("material", "src", imageUrl);
       }
       
-      // Start the animation when the marker is detected
-      const marker = document.getElementById('marker');
-      marker.addEventListener('markerFound', () => {
+      // For debugging, start the animation immediately (remove marker dependency)
+      window.animationInterval = setInterval(updateFrame, frameInterval);
+      
+      // If you want to run the animation only when the marker is detected,
+      // comment out the line above and uncomment the following:
+      /*
+      const marker = document.getElementById("marker");
+      marker.addEventListener("markerFound", () => {
         window.animationInterval = setInterval(updateFrame, frameInterval);
       });
-      
-      // Stop the animation when the marker is lost
-      marker.addEventListener('markerLost', () => {
+      marker.addEventListener("markerLost", () => {
         clearInterval(window.animationInterval);
       });
-      
-      // Create and animate the overlay text via JavaScript
-      const textEl = document.createElement('a-text');
-      textEl.setAttribute('value', 'Representative Sample of the Dataset');
-      // Position the text at the top left of the AR content
-      textEl.setAttribute('position', '-0.45 0.45 0.01');
-      textEl.setAttribute('rotation', '-90 0 0');
-      textEl.setAttribute('align', 'left');
-      textEl.setAttribute('color', '#ffffff');
-      textEl.setAttribute('width', '1');
-      // Animate the text's opacity to create a fade in/out effect
-      textEl.setAttribute('animation', 'property: material.opacity; from: 0; to: 1; dur: 2000; dir: alternate; loop: true');
-      
-      // Append the text to the same group as the animation plane so that it moves with the marker
-      const contentEntity = document.getElementById('content');
-      contentEntity.appendChild(textEl);
+      */
     </script>
   </body>
 </html>
