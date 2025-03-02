@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>AR Animation Demo</title>
+    <title>AR Animation Demo with Zoom</title>
     <!-- Include A-Frame -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <!-- Include AR.js for A-Frame -->
@@ -15,7 +15,8 @@
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
       <!-- Use the default "hiro" marker -->
       <a-marker preset="hiro" id="marker">
-        <a-entity id="content">
+        <!-- Group entity for AR content; adding zoom capability -->
+        <a-entity id="content" scale="1 1 1">
           <!-- AR animation plane -->
           <a-plane id="animationPlane"
                    position="0 0 0"
@@ -28,13 +29,13 @@
       <a-entity camera></a-entity>
       
       <a-assets id="assets">
-        <!-- Preload the first frame (it will be replaced dynamically) -->
+        <!-- Preload the first frame; will be replaced dynamically -->
         <img id="frame0" src="frames/timestep_10.png">
       </a-assets>
     </a-scene>
     
     <script>
-      // Helper: natural sort function (extracts numbers for proper ordering)
+      // Helper: natural sort function extracts numeric parts to sort filenames correctly.
       function naturalSort(a, b) {
         const regex = /\d+/g;
         const aNums = a.match(regex);
@@ -44,59 +45,89 @@
         }
         return a.localeCompare(b);
       }
+
+      // Animation parameters
+      let frames = [];
+      let currentFrameIndex = 0;
+      const frameInterval = 100; // 100ms per frame; adjust as needed
+      let animationInterval;
+
+      // Function to update the frame on the animation plane.
+      function updateFrame() {
+        // Cycle to next frame
+        currentFrameIndex = (currentFrameIndex + 1) % frames.length;
+        const imageUrl = 'frames/' + frames[currentFrameIndex];
+        const plane = document.getElementById('animationPlane');
+        
+        // Preload the image
+        const tempImg = new Image();
+        tempImg.onload = function() {
+          plane.setAttribute('material', 'src', imageUrl);
+        };
+        tempImg.onerror = function() {
+          console.error("Error loading image:", imageUrl);
+        };
+        tempImg.src = imageUrl;
+      }
       
-      // Load the manifest file that lists all frame file names
+      // Fetch the manifest file, sort it naturally, and start animation.
       fetch('frames/manifest.json')
         .then(response => response.json())
         .then(fileList => {
-          // Sort the fileList naturally
-          fileList.sort(naturalSort);
+          // Sort the fileList using the naturalSort function.
+          frames = fileList.sort(naturalSort);
+          console.log("Sorted frames:", frames);
           
-          let currentFrameIndex = 0;
-          const totalFrames = fileList.length;
-          const frameInterval = 100; // Adjust speed here (ms per frame)
-          
-          function updateFrame() {
-            currentFrameIndex = (currentFrameIndex + 1) % totalFrames;
-            const imageUrl = 'frames/' + fileList[currentFrameIndex];
-            const plane = document.getElementById('animationPlane');
-            
-            // Preload the image before updating
-            const tempImg = new Image();
-            tempImg.onload = function() {
-              plane.setAttribute('material', 'src', imageUrl);
-            };
-            tempImg.onerror = function() {
-              console.error("Error loading image:", imageUrl);
-            };
-            tempImg.src = imageUrl;
-          }
-          
-          // Start the animation when the marker is detected
+          // Start animation when marker is detected.
           const marker = document.getElementById('marker');
           marker.addEventListener('markerFound', () => {
-            window.animationInterval = setInterval(updateFrame, frameInterval);
+            // Reset to first frame when marker is found.
+            currentFrameIndex = 0;
+            // Clear any previous interval in case it was still running.
+            if (animationInterval) { clearInterval(animationInterval); }
+            animationInterval = setInterval(updateFrame, frameInterval);
           });
           
-          // Stop the animation when the marker is lost
+          // Stop animation when marker is lost.
           marker.addEventListener('markerLost', () => {
-            clearInterval(window.animationInterval);
+            clearInterval(animationInterval);
           });
-          
-          // Optionally, you can also add the overlay text here (if needed)
-          const textEl = document.createElement('a-text');
-          textEl.setAttribute('value', 'Representative Sample of the Dataset');
-          textEl.setAttribute('position', '-0.45 0.45 0.01');
-          textEl.setAttribute('rotation', '-90 0 0');
-          textEl.setAttribute('align', 'left');
-          textEl.setAttribute('color', '#ffffff');
-          textEl.setAttribute('width', '1');
-          textEl.setAttribute('animation', 'property: material.opacity; from: 0; to: 1; dur: 2000; dir: alternate; loop: true');
-          document.getElementById('content').appendChild(textEl);
         })
         .catch(error => {
           console.error("Error fetching manifest:", error);
         });
+
+      // --- Zoom functionality ---
+      // Listen for mouse wheel events on the document
+      // and adjust the scale of the "content" entity.
+      const contentEntity = document.getElementById('content');
+      let currentScale = 1; // Initial scale
+      
+      document.addEventListener('wheel', (event) => {
+        // Normalize the scroll direction:
+        // If scrolling up, zoom in; if scrolling down, zoom out.
+        const zoomFactor = 0.05;
+        if (event.deltaY < 0) {
+          // Zoom in
+          currentScale += zoomFactor;
+        } else {
+          // Zoom out, ensuring it doesn't go below a minimum scale
+          currentScale = Math.max(0.2, currentScale - zoomFactor);
+        }
+        // Update the scale of the content entity (uniform scaling)
+        contentEntity.setAttribute('scale', `${currentScale} ${currentScale} ${currentScale}`);
+      });
+      
+      // --- Optional: Add overlay text ---
+      const textEl = document.createElement('a-text');
+      textEl.setAttribute('value', 'Representative Sample of the Dataset');
+      textEl.setAttribute('position', '-0.45 0.45 0.01');
+      textEl.setAttribute('rotation', '-90 0 0');
+      textEl.setAttribute('align', 'left');
+      textEl.setAttribute('color', '#ffffff');
+      textEl.setAttribute('width', '1');
+      textEl.setAttribute('animation', 'property: material.opacity; from: 0; to: 1; dur: 2000; dir: alternate; loop: true');
+      document.getElementById('content').appendChild(textEl);
     </script>
   </body>
 </html>
