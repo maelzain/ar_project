@@ -15,9 +15,9 @@
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
       <!-- Use the default "hiro" marker -->
       <a-marker preset="hiro" id="marker">
-        <!-- Group entity for AR content; adding zoom capability -->
+        <!-- Group entity for AR content with zoom support -->
         <a-entity id="content" scale="1 1 1">
-          <!-- AR animation plane -->
+          <!-- Animated plane (initially showing the first frame) -->
           <a-plane id="animationPlane"
                    position="0 0 0"
                    rotation="-90 0 0"
@@ -29,37 +29,30 @@
       <a-entity camera></a-entity>
       
       <a-assets id="assets">
-        <!-- Preload the first frame; will be replaced dynamically -->
+        <!-- Preload the first frame (will be updated dynamically) -->
         <img id="frame0" src="frames/timestep_10.png">
       </a-assets>
     </a-scene>
     
     <script>
-      // Helper: natural sort function extracts numeric parts to sort filenames correctly.
-      function naturalSort(a, b) {
-        const regex = /\d+/g;
-        const aNums = a.match(regex);
-        const bNums = b.match(regex);
-        if (aNums && bNums) {
-          return parseInt(aNums[0]) - parseInt(bNums[0]);
-        }
-        return a.localeCompare(b);
+      // --- Generate Frames Array ---
+      const frames = [];
+      for (let t = 10; t <= 960; t += 10) {
+        frames.push(`timestep_${t}.png`);
       }
-
-      // Animation parameters
-      let frames = [];
+      console.log("Frames array:", frames);
+      
       let currentFrameIndex = 0;
       const frameInterval = 100; // 100ms per frame; adjust as needed
       let animationInterval;
 
-      // Function to update the frame on the animation plane.
+      // --- Update Frame Function ---
       function updateFrame() {
-        // Cycle to next frame
         currentFrameIndex = (currentFrameIndex + 1) % frames.length;
-        const imageUrl = 'frames/' + frames[currentFrameIndex];
+        const imageUrl = `frames/${frames[currentFrameIndex]}`;
         const plane = document.getElementById('animationPlane');
         
-        // Preload the image
+        // Preload the image before applying it
         const tempImg = new Image();
         tempImg.onload = function() {
           plane.setAttribute('material', 'src', imageUrl);
@@ -70,55 +63,53 @@
         tempImg.src = imageUrl;
       }
       
-      // Fetch the manifest file, sort it naturally, and start animation.
-      fetch('frames/manifest.json')
-        .then(response => response.json())
-        .then(fileList => {
-          // Sort the fileList using the naturalSort function.
-          frames = fileList.sort(naturalSort);
-          console.log("Sorted frames:", frames);
-          
-          // Start animation when marker is detected.
-          const marker = document.getElementById('marker');
-          marker.addEventListener('markerFound', () => {
-            // Reset to first frame when marker is found.
-            currentFrameIndex = 0;
-            // Clear any previous interval in case it was still running.
-            if (animationInterval) { clearInterval(animationInterval); }
-            animationInterval = setInterval(updateFrame, frameInterval);
-          });
-          
-          // Stop animation when marker is lost.
-          marker.addEventListener('markerLost', () => {
-            clearInterval(animationInterval);
-          });
-        })
-        .catch(error => {
-          console.error("Error fetching manifest:", error);
-        });
+      // --- Start & Stop Animation Functions ---
+      function startAnimation() {
+        if (animationInterval) { clearInterval(animationInterval); }
+        animationInterval = setInterval(updateFrame, frameInterval);
+      }
 
-      // --- Zoom functionality ---
-      // Listen for mouse wheel events on the document
-      // and adjust the scale of the "content" entity.
+      function stopAnimation() {
+        if (animationInterval) { clearInterval(animationInterval); }
+      }
+
+      // --- Marker Events for AR.js ---
+      const marker = document.getElementById('marker');
+      marker.addEventListener('markerFound', () => {
+        console.log("Marker found. Starting animation.");
+        // Reset to first frame
+        currentFrameIndex = 0;
+        startAnimation();
+      });
+      marker.addEventListener('markerLost', () => {
+        console.log("Marker lost. Stopping animation.");
+        stopAnimation();
+      });
+
+      // --- Fallback: Start animation automatically if marker not found after 3 seconds ---
+      setTimeout(() => {
+        if (!marker.object3D.visible) {
+          console.log("No marker detected within 3 seconds. Starting animation for demo.");
+          startAnimation();
+        }
+      }, 3000);
+
+      // --- Zoom Functionality ---
       const contentEntity = document.getElementById('content');
       let currentScale = 1; // Initial scale
-      
       document.addEventListener('wheel', (event) => {
-        // Normalize the scroll direction:
-        // If scrolling up, zoom in; if scrolling down, zoom out.
         const zoomFactor = 0.05;
         if (event.deltaY < 0) {
           // Zoom in
           currentScale += zoomFactor;
         } else {
-          // Zoom out, ensuring it doesn't go below a minimum scale
+          // Zoom out (with minimum scale limit)
           currentScale = Math.max(0.2, currentScale - zoomFactor);
         }
-        // Update the scale of the content entity (uniform scaling)
         contentEntity.setAttribute('scale', `${currentScale} ${currentScale} ${currentScale}`);
       });
-      
-      // --- Optional: Add overlay text ---
+
+      // --- Overlay Text: "Representative Sample of the Dataset" ---
       const textEl = document.createElement('a-text');
       textEl.setAttribute('value', 'Representative Sample of the Dataset');
       textEl.setAttribute('position', '-0.45 0.45 0.01');
@@ -126,6 +117,7 @@
       textEl.setAttribute('align', 'left');
       textEl.setAttribute('color', '#ffffff');
       textEl.setAttribute('width', '1');
+      // Fade in/out animation for the text
       textEl.setAttribute('animation', 'property: material.opacity; from: 0; to: 1; dur: 2000; dir: alternate; loop: true');
       document.getElementById('content').appendChild(textEl);
     </script>
