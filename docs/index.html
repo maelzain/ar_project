@@ -13,24 +13,24 @@
   </head>
   <body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-      <!-- Using the default "hiro" marker -->
+      <!-- Using the default Hiro marker -->
       <a-marker preset="hiro" id="marker">
         <!-- Grouping the AR content together -->
         <a-entity id="content">
-          <!-- The animated plane -->
+          <!-- Animated plane showing the frames -->
           <a-plane id="animationPlane"
                    position="0 0 0"
                    rotation="-90 0 0"
                    width="1" height="1"
                    material="src: #frame1; transparent: true;">
           </a-plane>
-          <!-- Overlay text: This appears at the top left of the plane -->
+          <!-- Overlay text in the top left corner -->
           <a-text id="overlayText"
                   value="Representative Sample of the Dataset"
                   position="-0.45 0.45 0.01"
                   rotation="-90 0 0"
                   align="left"
-                  color="#ffffff"
+                  color="#FFFFFF"
                   width="1">
           </a-text>
         </a-entity>
@@ -44,27 +44,28 @@
     </a-scene>
     
     <script>
-      // Dynamically generate frame filenames from timestep_10.png to timestep_960.png
+      // Generate an ordered array of frame filenames (from timestep_10.png to timestep_960.png)
       const frameFiles = [];
       for (let t = 10; t <= 960; t += 10) {
         frameFiles.push(`frames/timestep_${t}.png`);
       }
-      console.log("Frame Files:", frameFiles);
+      console.log("Frame Files Array:", frameFiles);
       
       let currentFrameIndex = 0;
       const totalFrames = frameFiles.length;
-      const frameInterval = 100; // 50ms per frame for faster animation
+      const frameInterval = 50; // 50ms per frame ~20 fps; adjust as needed
       
       function updateFrame() {
+        // Cycle through the frames
         currentFrameIndex = (currentFrameIndex + 1) % totalFrames;
         const imageUrl = frameFiles[currentFrameIndex];
-        console.log("Updating frame to:", imageUrl);
-        const plane = document.getElementById('animationPlane');
+        console.log("Switching to frame:", imageUrl);
         
+        const plane = document.getElementById("animationPlane");
         // Preload the image before updating the plane's material
         const tempImg = new Image();
         tempImg.onload = function() {
-          plane.setAttribute('material', 'src', imageUrl);
+          plane.setAttribute("material", "src", imageUrl);
         };
         tempImg.onerror = function() {
           console.error("Error loading image:", imageUrl);
@@ -72,16 +73,14 @@
         tempImg.src = imageUrl;
       }
       
-      // Start the animation when the marker is detected
-      const marker = document.getElementById('marker');
-      marker.addEventListener('markerFound', () => {
-        console.log("Marker found, starting animation");
+      // Start the animation when the marker is detected and stop when lost
+      const marker = document.getElementById("marker");
+      marker.addEventListener("markerFound", () => {
+        console.log("Marker found, starting animation.");
         window.animationInterval = setInterval(updateFrame, frameInterval);
       });
-      
-      // Stop the animation when the marker is lost
-      marker.addEventListener('markerLost', () => {
-        console.log("Marker lost, stopping animation");
+      marker.addEventListener("markerLost", () => {
+        console.log("Marker lost, stopping animation.");
         clearInterval(window.animationInterval);
       });
     </script>
